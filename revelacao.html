@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chá Revelação</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      position: relative;
+      transition: background-color 0.5s ease;
+      background-color: #000;
+      color: #fff;
+    }
+
+    /* Imagem de fundo com transparência */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('background-babies.png') center center / cover no-repeat;
+      opacity: 0.5;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes backgroundCycle {
+      0% { background: linear-gradient(to right, #ffc8dd 50%, #a2d2ff 50%); }
+      25% { background: linear-gradient(to right, #fdfd96 50%, #c1fba4 50%); }
+      50% { background: linear-gradient(to right, #ff9ff3 50%, #48dbfb 50%); }
+      75% { background: linear-gradient(to right, #d8e2dc 50%, #ffdab9 50%); }
+      100% { background: linear-gradient(to right, #ffcbf2 50%, #bde0fe 50%); }
+    }
+
+    .animate-background {
+      animation: backgroundCycle 3s infinite;
+    }
+
+    .word {
+      font-size: 5rem;
+      color: #333;
+      z-index: 1;
+    }
+
+    .letter {
+      display: inline-block;
+      min-width: 1ch;
+      text-align: center;
+    }
+
+    .animate-flip {
+      animation: flip 0.6s ease-in-out;
+    }
+
+    @keyframes flip {
+      0% { transform: rotateY(0); }
+      50% { transform: rotateY(180deg); }
+      100% { transform: rotateY(360deg); }
+    }
+
+    .controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      display: flex;
+      gap: 10px;
+    }
+
+    #resetButton, #playButton {
+      background: rgba(255, 255, 255, 0.7);
+      border: none;
+      font-size: 1.5rem;
+      padding: 0.4rem 0.7rem;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.3s;
+    }
+
+    #resetButton:hover, #playButton:hover {
+      background: rgba(255, 255, 255, 1);
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      opacity: 0.8;
+      animation-name: fall;
+      animation-timing-function: linear;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .heart {
+      position: absolute;
+      bottom: 0;
+      width: 20px;
+      height: 20px;
+      background: rgb(221, 120, 219);
+      transform: rotate(45deg);
+      animation: floatHeart 30s ease-in forwards;
+      opacity: 0.8;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgb(43, 28, 145);
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      top: -10px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: -10px;
+      top: 0;
+    }
+
+    @keyframes floatHeart {
+      0% {
+        transform: translateY(0) rotate(45deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-800px) rotate(45deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes moveBear {
+      0%   { bottom: 0; left: 10%; transform: scale(1); }
+      20%  { bottom: 50%; left: 5%; transform: scale(1.1); }
+      40%  { bottom: 80%; left: 15%; transform: scale(1.2); }
+      60%  { bottom: 60%; left: 85%; transform: scale(1.1); }
+      80%  { bottom: 30%; left: 90%; transform: scale(1.2); }
+      100% { bottom: 0; left: 10%; transform: scale(1); } /* Igual ao 0% */
+    }
+
+    .bear-animation {
+      animation: moveBear 20s ease-in-out infinite;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="resetButton">×</button>
+    <button id="playButton">▶️</button>
+  </div>
+
+  <div class="word" id="word">
+    <span class="letter" data-index="0">_</span>
+    <span class="letter" data-index="1">_</span>
+    <span class="letter" data-index="2">_</span>
+    <span class="letter" data-index="3">_</span>
+    <span class="letter" data-index="4">_</span>
+    <span class="letter" data-index="5">_</span>
+  </div>
+
+  <div id="confetti-container"></div>
+
+  <audio id="tensionSound" src="tension.mp3"></audio>
+  <audio id="celebration-sound" src="celebration.mp3" preload="auto"></audio>
+
+  <img id="drumBear" src="ursinho.gif" alt="Ursinho rufando tambor" class="bear-animation" style="
+    position: absolute;
+    bottom: 0;
+    left: 90%;
+    transform: translateX(-50%);
+    z-index: 0;
+    max-height: 200px;
+    opacity: 0.8;
+    display: none;
+  "/>
+
+  <script>
+    const celebrationSound = document.getElementById('celebration-sound');
+    const tensionSound = document.getElementById('tensionSound');
+    const letters = document.querySelectorAll('.letter');
+    const confettiContainer = document.getElementById('confetti-container');
+    const playButton = document.getElementById('playButton');
+    const resetButton = document.getElementById('resetButton');
+    const drumBear = document.getElementById('drumBear');
+
+    const options = ['a', 'o', 'e', 'i', 'u', 'x', 'y'];
+    const finalWord = ['m', 'e', 'n', 'i', 'n', 'a']; // Troque "a" por "o" para "menino"
+
+    let isAnimating = false;
+    let intervals = [];
+
+    function startAnimation() {
+      drumBear.src = 'ursinho.gif';
+      drumBear.style.display = 'block';
+      drumBear.classList.add('bear-move');
+      if (isAnimating) return;
+      isAnimating = true;
+
+      document.body.classList.add('animate-background');
+      tensionSound.currentTime = 0;
+      tensionSound.play();
+
+      let currentIndex = 0;
+
+      function animateLetter() {
+        if (currentIndex >= letters.length) {
+          revealComplete();
+          return;
+        }
+
+        let count = 0;
+        let innerIndex = 0;
+        const el = letters[currentIndex];
+        const interval = setInterval(() => {
+          el.textContent = options[innerIndex % options.length];
+          innerIndex++;
+          count++;
+          if (count > 60) {
+            clearInterval(interval);
+            el.textContent = finalWord[currentIndex];
+            el.classList.add('animate-flip');
+            currentIndex++;
+            setTimeout(animateLetter, 200);
+          }
+        }, 100);
+
+        intervals.push(interval); // Armazena o intervalo para controle
+      }
+
+      animateLetter();
+    }
+
+    function revealComplete() {
+      drumBear.src = 'ursinho-comemorando.gif';
+      tensionSound.pause();
+      tensionSound.currentTime = 0;
+      document.body.classList.remove('animate-background');
+      document.body.style.backgroundColor = '#d0f0c0';
+      launchConfetti();
+      //launchHearts();
+    }
+
+    function launchHearts() {
+      for (let i = 0; i < 20; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        heart.style.left = `${Math.random() * 100}vw`;
+        heart.style.background = Math.random() > 0.5 ? 'deeppink' : 'lightcoral';
+        document.body.appendChild(heart);
+        setTimeout(() => heart.remove(), 30000); // remove após a animação
+      }
+    }
+
+    function reset() {
+      drumBear.style.display = 'none';
+      isAnimating = false;
+      tensionSound.pause();
+      tensionSound.currentTime = 0;
+      celebrationSound.pause();
+      celebrationSound.currentTime = 0;
+      document.body.classList.remove('animate-background');
+      document.body.style.backgroundColor = '';
+
+      // Parar todos os intervalos ativos
+      intervals.forEach(clearInterval);
+      intervals = [];
+
+      letters.forEach(letter => {
+        letter.textContent = '_';
+        letter.classList.remove('animate-flip');
+      });
+
+      clearConfetti();
+    }
+
+    function launchConfetti() {
+      celebrationSound.currentTime = 0;
+      celebrationSound.play();
+
+      for (let i = 0; i < 150; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.top = '-10px';
+        confetti.style.backgroundColor = randomColor();
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 30000);
+      }
+    }
+
+    function clearConfetti() {
+      confettiContainer.innerHTML = '';
+    }
+
+    function randomColor() {
+      const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#1dd1a1', '#5f27cd', '#ff9ff3'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    playButton.addEventListener('click', startAnimation);
+    resetButton.addEventListener('click', reset);
+  </script>
+</body>
+</html>
