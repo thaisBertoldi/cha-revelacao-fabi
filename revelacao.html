@@ -19,7 +19,6 @@
       color: #fff;
     }
 
-    /* Imagem de fundo com transparência */
     body::before {
       content: "";
       position: absolute;
@@ -46,7 +45,7 @@
     }
 
     .word {
-      font-size: 5rem;
+      font-size: 10rem;
       color: #333;
       z-index: 1;
     }
@@ -148,17 +147,81 @@
       }
     }
 
-    @keyframes moveBear {
-      0%   { bottom: 0; left: 10%; transform: scale(1); }
-      20%  { bottom: 50%; left: 5%; transform: scale(1.1); }
-      40%  { bottom: 80%; left: 15%; transform: scale(1.2); }
-      60%  { bottom: 60%; left: 85%; transform: scale(1.1); }
-      80%  { bottom: 30%; left: 90%; transform: scale(1.2); }
-      100% { bottom: 0; left: 10%; transform: scale(1); } /* Igual ao 0% */
+    @keyframes bearTeleport {
+      0%   { left: 5%;  bottom: 5%; top: auto; right: auto; }
+      10%  { left: 5%;  top: auto;    bottom: 50%; right: auto; }
+      20%  { left: 5%;  top: 5%;    bottom: auto; right: auto; }
+      40%  { right: 5%; top: 5%;    left: auto; bottom: auto; }
+      60%  { right: 5%; top: 50%;   left: auto; bottom: auto; transform: translateY(-50%); }
+      80%  { right: 5%; bottom: 5%; left: auto; top: auto; transform: none; }
+      100% { left: 5%;  bottom: 5%; right: auto; top: auto; }
     }
 
     .bear-animation {
-      animation: moveBear 20s ease-in-out infinite;
+      position: absolute;
+      width: 120px;
+      height: auto;
+      animation: bearTeleport 20s infinite steps(1);
+    }
+
+    @keyframes grow {
+      0% { transform: scale(1); }
+      100% { transform: scale(2); }
+    }
+
+    .grow-effect {
+      animation: grow 1.5s ease-in-out forwards;
+    }
+
+    @media screen and (max-width: 360px) {
+      body {
+        font-size: 14px;
+        text-align: center;
+      }
+
+      .word {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        font-size: 3rem;
+      }
+
+      .letter {
+        min-width: 1ch;
+        text-align: center;
+        display: inline-block;
+      }
+
+      .controls {
+        top: 5px;
+        right: 5px;
+        gap: 5px;
+      }
+
+      #resetButton, #playButton {
+        font-size: 1.2rem;
+        padding: 0.3rem 0.5rem;
+      }
+
+      .bear-animation {
+        width: 80px;
+        max-height: 150px;
+      }
+
+      .confetti {
+        width: 7px;
+        height: 7px;
+      }
+
+      @keyframes growAll {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.2); } 
+      }
+
+      @keyframes growLast {
+        0% { transform: scale(1.2); }
+        100% { transform: scale(2); } 
+      }
     }
 
   </style>
@@ -244,7 +307,7 @@
           }
         }, 100);
 
-        intervals.push(interval); // Armazena o intervalo para controle
+        intervals.push(interval);
       }
 
       animateLetter();
@@ -255,9 +318,11 @@
       tensionSound.pause();
       tensionSound.currentTime = 0;
       document.body.classList.remove('animate-background');
-      document.body.style.backgroundColor = '#d0f0c0';
+      document.body.style.backgroundColor = '#f0c0e8';
       launchConfetti();
-      //launchHearts();
+
+      const lastLetter = letters[letters.length - 1];
+      lastLetter.classList.add('grow-effect');
     }
 
     function launchHearts() {
@@ -267,7 +332,7 @@
         heart.style.left = `${Math.random() * 100}vw`;
         heart.style.background = Math.random() > 0.5 ? 'deeppink' : 'lightcoral';
         document.body.appendChild(heart);
-        setTimeout(() => heart.remove(), 30000); // remove após a animação
+        setTimeout(() => heart.remove(), 30000);
       }
     }
 
@@ -287,7 +352,7 @@
 
       letters.forEach(letter => {
         letter.textContent = '_';
-        letter.classList.remove('animate-flip');
+        letter.classList.remove('animate-flip', 'grow-effect');
       });
 
       clearConfetti();
